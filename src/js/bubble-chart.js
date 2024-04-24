@@ -5,10 +5,15 @@ d3.csv("../data/inpatient_charges_2011.csv").then(function (dataset) {
   const height = 800;
 
   // Create the SVG container by selecting the existing SVG element in the HTML
+  // const svg = d3
+  //   .select("#bubble-chart-svg")
+  //   .attr("width", width)
+  //   .attr("height", height);
   const svg = d3
-    .select("#bubble-chart-svg")
-    .attr("width", width)
-    .attr("height", height);
+    .select(".bubble")
+    .append("svg")
+    .attr("height", height)
+    .attr("width", width);
 
   // Convert numeric values from strings to numbers
   dataset.forEach(function (d) {
@@ -37,10 +42,9 @@ d3.csv("../data/inpatient_charges_2011.csv").then(function (dataset) {
   });
 
   // Create a color scale
-  const colorScale = d3
-    .scaleOrdinal()
-    .domain(aggregatedData.map((d) => d.drg_definition))
-    .range(d3.schemeCategory10);
+  const colorScale = d3.scaleSequential(d3.interpolateRainbow);
+  // .domain(aggregatedData.map((d) => d.drg_definition))
+  // .range(d3.schemeCategory10);
 
   // Structure the data hierarchy and sum the values for the layout
   const root = d3.hierarchy({ children: aggregatedData }).sum((d) => d.count); // Define the value to calculate the area of the circles
