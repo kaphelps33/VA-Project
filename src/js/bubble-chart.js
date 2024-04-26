@@ -18,32 +18,6 @@ class BubbleChart {
     vis.width = vis.config.containerWidth;
     vis.height = vis.config.containerHeight;
 
-    const groupedData = d3.group(data, (d) => d.drg_definition);
-
-    const aggregatedData = Array.from(groupedData, ([key, value]) => {
-      const totalAverageMedicarePayments = d3.mean(
-        value,
-        (d) => d.average_medicare_payments
-      );
-      const totalAverageTotalPayments = d3.mean(
-        value,
-        (d) => d.average_total_payments
-      );
-      return {
-        drg_definition: key,
-        totalAverageMedicarePayments,
-        totalAverageTotalPayments,
-        count: value.length,
-      };
-    });
-
-    aggregatedData.sort(
-      (a, b) => b.totalAverageMedicarePayments - a.totalAverageMedicarePayments
-    );
-
-    // Showing only the top spots of data
-    const topData = aggregatedData.slice(0, 50);
-
     vis.svg = d3
       .select(vis.config.parentElement)
       .append("svg")
@@ -53,7 +27,7 @@ class BubbleChart {
     vis.pack = d3.pack().size([vis.width, vis.height]).padding(1.5);
 
     // Define the value to calculate the area of the circles
-    vis.root = d3.hierarchy({ children: topData }).sum((d) => d.count);
+    vis.root = d3.hierarchy({ children: vis.data }).sum((d) => d.count);
 
     vis.nodes = vis.pack(vis.root).leaves();
 

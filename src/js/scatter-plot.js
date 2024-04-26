@@ -22,15 +22,7 @@ class ScatterPlot {
       .append("svg")
       .attr("width", vis.width)
       .attr("height", vis.height)
-      .append("g")
-      .attr(
-        "transform",
-        "translate(" +
-          vis.config.margin.left +
-          "," +
-          vis.config.margin.top +
-          ")"
-      );
+      .append("g");
 
     vis.svg
       .append("text")
@@ -41,53 +33,37 @@ class ScatterPlot {
       .style("font-size", 20)
       .text("What charges are covered by medicare vs. what charges are paid");
 
-    const groupedData = d3.group(data, (d) => d.drg_definition);
+    vis.yMax = d3.max(vis.data, (d) => d.totalAverageCoveredCharges);
+    vis.xMax = d3.max(vis.data, (d) => d.totalAverageMedicarePayments);
 
-    const aggregatedData = Array.from(groupedData, ([key, value]) => {
-      const totalAverageMedicarePayments = d3.mean(
-        value,
-        (d) => d.average_medicare_payments
-      );
-      const totalAverageTotalPayments = d3.mean(
-        value,
-        (d) => d.average_total_payments
-      );
-      const totalAverageCoveredCharges = d3.mean(
-        value,
-        (d) => d.average_covered_charges
-      );
-      return {
-        drg_definition: key,
-        totalAverageMedicarePayments,
-        totalAverageTotalPayments,
-        totalAverageCoveredCharges,
-        count: value.length,
-      };
-    });
-
-    aggregatedData.sort(
-      (a, b) => b.totalAverageMedicarePayments - a.totalAverageMedicarePayments
-    );
-
-    // Showing only the top spots of data
-    vis.topData = aggregatedData.slice(0, 50);
-
-    vis.yMax = d3.max(vis.topData, (d) => d.totalAverageCoveredCharges);
-    vis.xMax = d3.max(vis.topData, (d) => d.totalAverageMedicarePayments);
-
+    // x-axis
     vis.x = d3
       .scaleLinear()
-      .domain([0, vis.xMax + 100])
-      .range([0, vis.width]);
+      .domain([0, vis.xMax])
+      .range([0, vis.width - vis.config.margin.right]);
 
-    vis.y = d3.scaleLinear().domain([0, vis.yMax]).range([vis.height, 0]);
+    vis.xAxis = d3.axisBottom().scale(vis.x).tickFormat(d3.format(".2s"));
 
     vis.svg
       .append("g")
-      .attr("transform", "translate(0," + (vis.height - 30) + ")")
-      .call(d3.axisBottom(vis.x).ticks(5));
+      .attr(
+        "transform",
+        "translate(0, " + (vis.height - vis.config.margin.bottom) + ")"
+      )
+      .call(vis.xAxis);
 
-    vis.svg.append("g").call(d3.axisLeft(vis.y).ticks(5));
+    // y-axis
+    vis.y = d3
+      .scaleLinear()
+      .domain([0, vis.yMax])
+      .range([vis.height - vis.config.margin.bottom, vis.config.margin.top]);
+
+    vis.yAxis = d3.axisLeft().scale(vis.y).tickFormat(d3.format(".2s"));
+
+    vis.svg
+      .append("g")
+      .attr("transfrom", `translate(${vis.config.margin.left},0)`)
+      .call(vis.yAxis);
 
     vis.tooltip = d3.select(".tooltip").append("p");
   }
@@ -103,7 +79,7 @@ class ScatterPlot {
     vis.svg
       .append("g")
       .selectAll("dot")
-      .data(vis.topData)
+      .data(vis.data)
       .enter()
       .append("circle")
       .attr("cx", function (d) {
@@ -113,9 +89,9 @@ class ScatterPlot {
         return vis.y(d.totalAverageCoveredCharges);
       })
       .attr("r", 5)
-      .style("fill", (d) => colorScale(d.totalAverageTotalPayments))
+      // .style("fill", (d) => colorScale(d.totalAverageTotalPayments))
+      .style("fill", (d) => colorScale(d.drg_definition))
       .on("mouseover", (e, d) => {
-        console.log("Working");
         vis.tooltip
           .html(
             `Covered Charges: $${d.totalAverageCoveredCharges.toLocaleString()}`
