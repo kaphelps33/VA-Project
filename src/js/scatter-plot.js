@@ -108,11 +108,25 @@ class ScatterPlot {
 
   updateVis() {
     let vis = this;
+
+    vis.dispatcher.on("highlight", (drg_definition) => {
+      vis.svg
+        .selectAll("circle")
+        .style("opacity", (d) =>
+          d.drg_definition === drg_definition ? 1 : 0.3
+        );
+    });
+
+    vis.dispatcher.on("reset", () => {
+      vis.svg.selectAll("circle").style("opacity", 1);
+    });
+
     vis.renderVis();
   }
 
   renderVis() {
     let vis = this;
+    vis.svg.selectAll("circle").remove();
 
     vis.svg
       .append("g")
@@ -146,8 +160,8 @@ class ScatterPlot {
           .html(
             `
             MS-DRG Code: ${d.drg_definition}<br>
-            Covered Charges: $${d.totalAverageCoveredCharges.toLocaleString()}<br>
-            Medicare Paid Charges: $${d.totalAverageMedicarePayments.toLocaleString()}<br>
+            Average Covered Charges: $${d.totalAverageCoveredCharges.toLocaleString()}<br>
+            Average Medicare Payments: $${d.totalAverageMedicarePayments.toLocaleString()}<br>
             <b>Uncovered Charges: $${(
               d.totalAverageCoveredCharges - d.totalAverageTotalPayments
             ).toLocaleString()}<b>`

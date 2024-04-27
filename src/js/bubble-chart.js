@@ -111,17 +111,24 @@ class BubbleChart {
     // Hover actions
     vis.bubbles
       .on("mouseover", (event, d) => {
+        vis.dispatcher.call("highlight", event, d.data.drg_definition);
         vis.bubbles
           .transition()
           .duration(200)
           .style("opacity", (circle) => (circle === d ? 1 : 0.3));
         vis.tooltip
-          .html(`${d.data.drg_definition}`)
+          .html(
+            `${d.data.drg_definition}<br>
+          Uncovered Charges: $${(
+            d.data.totalAverageCoveredCharges - d.data.totalAverageTotalPayments
+          ).toLocaleString()}`
+          )
           .style("left", event.pageX + "px")
           .style("top", event.pageY + "px")
           .style("opacity", 0.9);
       })
       .on("mouseout", () => {
+        vis.dispatcher.call("reset", event, null);
         vis.tooltip.style("opacity", 0);
         vis.bubbles.transition().duration(200).style("opacity", 1);
       });
