@@ -129,9 +129,12 @@ class ScatterPlot {
       .attr("r", 5)
       // .style("fill", (d) => colorScale(d.totalAverageTotalPayments))
       .style("fill", (d) =>
-        colorScale(d.totalAverageCoveredCharges - d.totalAverageTotalPayments)
+        vis.colorScale(
+          d.totalAverageCoveredCharges - d.totalAverageTotalPayments
+        )
       )
       .on("mouseover", (event, d) => {
+        vis.dispatcher.call("highlight", event, d.drg_definition);
         // increase selected circle radius
         d3.select(event.target).attr("r", 10);
         // lower opacity of all other circles
@@ -153,7 +156,8 @@ class ScatterPlot {
           .style("left", `${event.pageX}px`)
           .style("top", `${event.pageY}px`);
       })
-      .on("mouseout", function () {
+      .on("mouseout", function (event, d) {
+        vis.dispatcher.call("reset", event, null);
         // reset radius
         d3.select(this).attr("r", 5);
         // reset opacity

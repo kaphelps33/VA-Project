@@ -44,6 +44,13 @@ class BubbleChart {
       .scaleLinear()
       .domain([1, d3.max(vis.nodes, (d) => d.r)]) // Set the domain to the range of radii
       .range([0, 24]); // Set the range of font sizes
+
+    // tooltip
+    vis.tooltip = d3
+      .select(vis.config.parentElement)
+      .append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
   }
 
   updateVis() {
@@ -54,23 +61,33 @@ class BubbleChart {
     // Create the bubbles and bind them to the nodes data
     vis.bubbles = vis.svg
       .selectAll("circle")
-      .data(vis.nodes)
+      // .data(vis.nodes)
+      .data(vis.root.leaves())
       .enter()
       .append("circle")
       .attr("cx", (d) => d.x)
       .attr("cy", (d) => d.y)
-      .attr("r", (d) => vis.radiusScale(d.data.totalAverageMedicarePayments)) // The radius is determined by the pack layout
-      .style("fill", (d) => vis.colorScale(d.data.totalAverageTotalPayments));
-
-    // Add tooltips to each bubble using the title tag for simplicity
-    vis.bubbles
-      .append("title")
-      .text(
-        (d) =>
-          `${
-            d.data.drg_definition
-          }\nAverage Medicare Payments: $${d.data.totalAverageMedicarePayments.toLocaleString()}\nAverage Total Payments: $${d.data.totalAverageTotalPayments.toLocaleString()}`
+      // Size of circle = average total payments
+      .attr("r", (d) => vis.radiusScale(d.data.totalAverageMedicarePayments))
+      .style("fill", (d) =>
+        vis.colorScale(
+          d.data.totalAverageCoveredCharges - d.data.totalAverageTotalPayments
+        )
       );
+
+    // listen for highlight on scatter plot
+    vis.dispatcher.on("highlight", (drg_definition) => {
+      vis.svg
+        .selectAll("circle")
+        .style("opacity", (d) =>
+          d.data.drg_definition === drg_definition ? 1 : 0.3
+        );
+    });
+
+    vis.dispatcher.on("reset", () => {
+      vis.svg.selectAll("circle").style("opacity", 1);
+    });
+
     vis.renderVis();
   }
 
@@ -91,29 +108,23 @@ class BubbleChart {
       )
       .stop();
 
-    // Define the hover behavior
-    const hover = (event, d) => {
-      // Reduce the opacity of all circles
-      vis.bubbles
-        .transition()
-        .duration(200)
-        .style("opacity", (circle) => (circle === d ? 1 : 0.3));
-
-      // Set the radius of the hovered-over circle to the maximum radius
-      // d3.select(event.target).attr("r", 100);
-    };
-
-    // Reset the circles on mouseout
-    const reset = () => {
-      vis.bubbles
-        .transition()
-        .duration(200)
-        .style("opacity", 1)
-        .attr("r", (d) => vis.radiusScale(d.data.totalAverageMedicarePayments));
-    };
-
-    // Apply the hover behavior
-    vis.bubbles.on("mouseover", hover).on("mouseout", reset);
+    // Hover actions
+    vis.bubbles
+      .on("mouseover", (event, d) => {
+        vis.bubbles
+          .transition()
+          .duration(200)
+          .style("opacity", (circle) => (circle === d ? 1 : 0.3));
+        vis.tooltip
+          .html(`${d.data.drg_definition}`)
+          .style("left", event.pageX + "px")
+          .style("top", event.pageY + "px")
+          .style("opacity", 0.9);
+      })
+      .on("mouseout", () => {
+        vis.tooltip.style("opacity", 0);
+        vis.bubbles.transition().duration(200).style("opacity", 1);
+      });
 
     // Create the labels for the big circles
     const labels = vis.svg
@@ -130,7 +141,14 @@ class BubbleChart {
             vis.radiusScale(d.data.totalAverageMedicarePayments)
           )}px`
       ) // Use the text scale to set the font size
-      .text((d) => "$" + d.data.totalAverageMedicarePayments.toLocaleString()) // Display the price
+      .text(
+        (d) =>
+          "$" +
+          (
+            d.data.totalAverageCoveredCharges - d.data.totalAverageTotalPayments
+          ).toLocaleString()
+      ) // Display the price
+      // .text((d) => d.data.drg_definition) // Display the price
       .attr("x", (d) => d.x)
       .attr("y", (d) => d.y);
 

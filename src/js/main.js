@@ -1,8 +1,6 @@
 let data, bubbleChart, scatterPlot;
 let colorScale;
 
-let bubbleColorScale = d3.scaleSequential(d3.interpolateRainbow);
-
 const dispatcher = d3.dispatch("highlight", "reset");
 
 d3.csv("../data/final_data.csv").then((_data) => {
@@ -58,11 +56,6 @@ d3.csv("../data/final_data.csv").then((_data) => {
     (d) => d.totalAverageCoveredCharges - d.totalAverageTotalPayments
   );
 
-  bubbleColorScale = d3
-    .scaleOrdinal()
-    .domain(data.map((d) => d.Year))
-    .range(d3.schemeSet1);
-
   colorScale = d3
     .scaleSequential(d3.interpolateOrRd)
     .domain([0, maxMedicaidNotCovered]);
@@ -75,7 +68,7 @@ d3.csv("../data/final_data.csv").then((_data) => {
       margin: { top: 20, right: 20, bottom: 20, left: 20 },
     },
     topData,
-    bubbleColorScale,
+    colorScale,
     dispatcher
   );
   bubbleChart.updateVis();
