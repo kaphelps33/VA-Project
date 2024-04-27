@@ -20,23 +20,31 @@ class ScatterPlot {
     vis.svg = d3
       .select(".scatter")
       .append("svg")
-      .attr("width", vis.width)
+      .attr(
+        "width",
+        vis.width + vis.config.margin.right + vis.config.margin.left
+      )
       .attr("height", vis.height)
-      .append("g");
+      .append("g")
+      .attr(
+        "transform",
+        `translate(${vis.config.margin.left}, ${vis.config.margin.top})`
+      );
 
     vis.svg
       .append("text")
-      .attr("x", 0)
-      .attr("y", 0)
+      .attr("x", vis.width / 2)
+      .attr("y", -vis.config.margin.top + 30)
       .attr("text-anchor", "middle")
       .style("font-family", "Helvetica")
       .style("font-size", 20)
-      .text("What charges are covered by medicare vs. what charges are paid");
+      .style("fill", "white")
+      .text("What Charges Are Covered By Medicare vs. What Charges Are Paid?");
 
     vis.yMax = d3.max(vis.data, (d) => d.totalAverageCoveredCharges);
     vis.xMax = d3.max(vis.data, (d) => d.totalAverageMedicarePayments);
 
-    // x-axis
+    // x-axis (total average medicare payments)
     vis.x = d3
       .scaleLinear()
       .domain([0, vis.xMax])
@@ -48,9 +56,22 @@ class ScatterPlot {
       .append("g")
       .attr(
         "transform",
-        "translate(0, " + (vis.height - vis.config.margin.bottom) + ")"
+        `translate(${vis.config.margin.left}, ${
+          vis.height - vis.config.margin.bottom
+        })`
       )
       .call(vis.xAxis);
+
+    // axis label
+    vis.svg
+      .append("text")
+      .attr("x", vis.width / 2)
+      .attr("y", vis.height - vis.config.margin.bottom + 40)
+      .attr("text-anchor", "middle")
+      .style("font-family", "Helvetica")
+      .style("font-size", 16)
+      .style("fill", "white")
+      .text("Total Average Medicare Payments");
 
     // y-axis
     vis.y = d3
@@ -62,10 +83,27 @@ class ScatterPlot {
 
     vis.svg
       .append("g")
-      .attr("transfrom", `translate(${vis.config.margin.left},0)`)
+      .attr("transform", `translate(${vis.config.margin.left},0)`)
       .call(vis.yAxis);
 
-    vis.tooltip = d3.select(".tooltip").append("p");
+    // axis label
+    vis.svg
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -vis.height / 2)
+      .attr("y", -vis.config.margin.left + 60) // Position to the left of y-axis
+      .attr("text-anchor", "middle")
+      .style("font-family", "Helvetica")
+      .style("font-size", 16)
+      .style("fill", "white")
+      .text("Total Average Covered Charges");
+
+    // tooltip
+    vis.tooltip = d3
+      .select(vis.config.parentElement)
+      .append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
   }
 
   updateVis() {
@@ -90,15 +128,36 @@ class ScatterPlot {
       })
       .attr("r", 5)
       // .style("fill", (d) => colorScale(d.totalAverageTotalPayments))
-      .style("fill", (d) => colorScale(d.drg_definition))
-      .on("mouseover", (e, d) => {
+      .style("fill", (d) =>
+        colorScale(d.totalAverageCoveredCharges - d.totalAverageTotalPayments)
+      )
+      .on("mouseover", (event, d) => {
+        // increase selected circle radius
+        d3.select(event.target).attr("r", 10);
+        // lower opacity of all other circles
+        vis.svg
+          .selectAll("circle")
+          .filter((dOther) => dOther !== d)
+          .attr("opacity", 0.2);
         vis.tooltip
           .html(
-            `Covered Charges: $${d.totalAverageCoveredCharges.toLocaleString()}`
+            `
+            MS-DRG Code: ${d.drg_definition}<br>
+            Covered Charges: $${d.totalAverageCoveredCharges.toLocaleString()}<br>
+            Medicare Paid Charges: $${d.totalAverageMedicarePayments.toLocaleString()}<br>
+            <b>Uncovered Charges: $${(
+              d.totalAverageCoveredCharges - d.totalAverageTotalPayments
+            ).toLocaleString()}<b>`
           )
-          .style("opacity", 1);
+          .style("opacity", 1)
+          .style("left", `${event.pageX}px`)
+          .style("top", `${event.pageY}px`);
       })
-      .on("mouseout", () => {
+      .on("mouseout", function () {
+        // reset radius
+        d3.select(this).attr("r", 5);
+        // reset opacity
+        vis.svg.selectAll("circle").attr("opacity", 1);
         vis.tooltip.style("opacity", 0);
       });
   }

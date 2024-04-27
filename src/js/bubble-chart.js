@@ -43,7 +43,7 @@ class BubbleChart {
     vis.textScale = d3
       .scaleLinear()
       .domain([1, d3.max(vis.nodes, (d) => d.r)]) // Set the domain to the range of radii
-      .range([0, 15]); // Set the range of font sizes
+      .range([0, 24]); // Set the range of font sizes
   }
 
   updateVis() {
@@ -67,7 +67,9 @@ class BubbleChart {
       .append("title")
       .text(
         (d) =>
-          `${d.data.drg_definition}\nAverage Medicare Payments: ${d.data.totalAverageMedicarePayments}\nAverage Total Payments: ${d.data.totalAverageTotalPayments}`
+          `${
+            d.data.drg_definition
+          }\nAverage Medicare Payments: $${d.data.totalAverageMedicarePayments.toLocaleString()}\nAverage Total Payments: $${d.data.totalAverageTotalPayments.toLocaleString()}`
       );
     vis.renderVis();
   }
@@ -88,6 +90,30 @@ class BubbleChart {
           )
       )
       .stop();
+
+    // Define the hover behavior
+    const hover = (event, d) => {
+      // Reduce the opacity of all circles
+      vis.bubbles
+        .transition()
+        .duration(200)
+        .style("opacity", (circle) => (circle === d ? 1 : 0.3));
+
+      // Set the radius of the hovered-over circle to the maximum radius
+      // d3.select(event.target).attr("r", 100);
+    };
+
+    // Reset the circles on mouseout
+    const reset = () => {
+      vis.bubbles
+        .transition()
+        .duration(200)
+        .style("opacity", 1)
+        .attr("r", (d) => vis.radiusScale(d.data.totalAverageMedicarePayments));
+    };
+
+    // Apply the hover behavior
+    vis.bubbles.on("mouseover", hover).on("mouseout", reset);
 
     // Create the labels for the big circles
     const labels = vis.svg

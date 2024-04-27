@@ -2,3 +2,16 @@
   max-width: 42em;
 }
 
+.tooltip {
+  position: absolute;
+  text-align: center;
+  width: 200px;
+  height: auto;
+  padding: 10px;
+  font-size: 12px; /* Adjust the font size as needed */
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 5px;
+  pointer-events: none;
+  z-index: 999;
+}

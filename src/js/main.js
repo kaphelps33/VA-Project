@@ -3,7 +3,7 @@ let colorScale;
 
 let bubbleColorScale = d3.scaleSequential(d3.interpolateRainbow);
 
-const dispatcher = d3.dispatch("filterYear");
+const dispatcher = d3.dispatch("highlight", "reset");
 
 d3.csv("../data/final_data.csv").then((_data) => {
   data = _data;
@@ -21,9 +21,6 @@ d3.csv("../data/final_data.csv").then((_data) => {
       d[key] = +d[key];
     });
   });
-
-  const year = filterYear();
-  console.log(year);
 
   const groupedData = d3.group(data, (d) => d.drg_definition);
 
@@ -56,15 +53,19 @@ d3.csv("../data/final_data.csv").then((_data) => {
   // Showing only the top spots of data
   const topData = aggregatedData.slice(0, 50);
 
+  const maxMedicaidNotCovered = d3.max(
+    topData,
+    (d) => d.totalAverageCoveredCharges - d.totalAverageTotalPayments
+  );
+
   bubbleColorScale = d3
     .scaleOrdinal()
     .domain(data.map((d) => d.Year))
     .range(d3.schemeSet1);
 
   colorScale = d3
-    .scaleOrdinal()
-    .domain(data.map((d) => d.average_total_payments))
-    .range(d3.schemeSet1);
+    .scaleSequential(d3.interpolateOrRd)
+    .domain([0, maxMedicaidNotCovered]);
 
   bubbleChart = new BubbleChart(
     {
@@ -84,25 +85,11 @@ d3.csv("../data/final_data.csv").then((_data) => {
       parentElement: ".scatter",
       containerWidth: 600,
       containerHeight: 600,
-      margin: { top: 20, right: 20, bottom: 20, left: 20 },
+      margin: { top: 30, right: 50, bottom: 100, left: 50 },
     },
     topData,
     colorScale,
     dispatcher
   );
   scatterPlot.updateVis();
-});
-
-function filterYear() {
-  const slider = d3.select(".year-slider");
-  let selectedYear = +slider.property("value");
-  return selectedYear;
-  // dispatcher.call("filterYear", null, selectedYear);
-}
-
-// Add event listener to the dispatcher
-dispatcher.on("filterYear", function (year) {
-  // Update the visualization based on the selected year
-  bubbleChart.filterYear(year);
-  scatterPlot.filterYear(year);
 });
