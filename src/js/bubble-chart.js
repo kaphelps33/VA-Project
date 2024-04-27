@@ -29,16 +29,26 @@ class BubbleChart {
     // Define the value to calculate the area of the circles
     vis.root = d3.hierarchy({ children: vis.data }).sum((d) => d.count);
 
+    // Calculate the maximum count for the radius scale
+    vis.maxCount = d3.max(vis.data, (d) => d.count);
+    vis.minCount = d3.min(vis.data, (d) => d.count);
+
     vis.nodes = vis.pack(vis.root).leaves();
 
     vis.radiusScale = d3
       .scalePow()
-      .exponent(0.7)
-      .domain([
-        d3.min(vis.nodes, (d) => d.data.totalAverageMedicarePayments),
-        d3.max(vis.nodes, (d) => d.data.totalAverageMedicarePayments),
-      ])
-      .range([10, 100]);
+      .exponent(0.5)
+      .domain([0, this.maxCount])
+      .range([15, 90]);
+
+    // vis.radiusScale = d3
+    //   .scalePow()
+    //   .exponent(0.7)
+    //   .domain([
+    //     d3.min(vis.nodes, (d) => d.data.totalAverageMedicarePayments),
+    //     d3.max(vis.nodes, (d) => d.data.totalAverageMedicarePayments),
+    //   ])
+    //   .range([10, 100]);
 
     vis.textScale = d3
       .scaleLinear()
@@ -51,12 +61,22 @@ class BubbleChart {
       .append("div")
       .attr("class", "tooltip")
       .style("opacity", 0);
+
+    vis.svg
+      .append("text")
+      .attr("x", vis.width / 2)
+      .attr("y", vis.config.margin.top + 10)
+      .attr("text-anchor", "middle")
+      .style("font-size", 20)
+      .style("fill", "White")
+      .text("The Most Common DRGs and Their Costs");
   }
 
   updateVis() {
     let vis = this;
 
-    vis.root.sort((a, b) => b.value - a.value);
+    vis.root.sort((a, b) => b.count - a.count);
+    // vis.root.sort((a, b) => b.value - a.value);
 
     // Create the bubbles and bind them to the nodes data
     vis.bubbles = vis.svg
@@ -68,7 +88,8 @@ class BubbleChart {
       .attr("cx", (d) => d.x)
       .attr("cy", (d) => d.y)
       // Size of circle = average total payments
-      .attr("r", (d) => vis.radiusScale(d.data.totalAverageMedicarePayments))
+      // .attr("r", (d) => vis.radiusScale(d.data.totalAverageMedicarePayments))
+      .attr("r", (d) => vis.radiusScale(d.data.count))
       .style("fill", (d) =>
         vis.colorScale(
           d.data.totalAverageCoveredCharges - d.data.totalAverageTotalPayments
@@ -96,15 +117,13 @@ class BubbleChart {
 
     const simulation = d3
       .forceSimulation(vis.nodes)
-      .force("charge", d3.forceManyBody().strength(15))
+      .force("charge", d3.forceManyBody().strength(14))
       .force("center", d3.forceCenter(vis.width / 2, vis.height / 2))
       .force(
         "collision",
-        d3
-          .forceCollide(30)
-          .radius(
-            (d) => vis.radiusScale(d.data.totalAverageMedicarePayments) + 1
-          )
+        d3.forceCollide(30).radius((d) => vis.radiusScale(d.data.count) + 1)
+        // .radius(
+        //   (d) => vis.radiusScale(d.data.totalAverageMedicarePayments) + 1
       )
       .stop();
 
@@ -143,10 +162,9 @@ class BubbleChart {
       .style("text-anchor", "middle")
       .style(
         "font-size",
-        (d) =>
-          `${vis.textScale(
-            vis.radiusScale(d.data.totalAverageMedicarePayments)
-          )}px`
+        (d) => `${vis.textScale(vis.radiusScale(d.data.count))}px`
+        // `${vis.textScale(
+        //   vis.radiusScale(d.data.totalAverageMedicarePayments)
       ) // Use the text scale to set the font size
       .text(
         (d) =>

@@ -51,6 +51,8 @@ d3.csv("../data/final_data.csv").then((_data) => {
   // Showing only the top spots of data
   const topData = aggregatedData.slice(0, 50);
 
+  console.log(topData);
+
   const maxMedicaidNotCovered = d3.max(
     topData,
     (d) => d.totalAverageCoveredCharges - d.totalAverageTotalPayments
@@ -64,7 +66,7 @@ d3.csv("../data/final_data.csv").then((_data) => {
     {
       parentElement: ".bubble",
       containerWidth: 600,
-      containerHeight: 600,
+      containerHeight: 800,
       margin: { top: 20, right: 20, bottom: 20, left: 20 },
     },
     topData,

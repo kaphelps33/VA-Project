@@ -113,7 +113,7 @@ class ScatterPlot {
       vis.svg
         .selectAll("circle")
         .style("opacity", (d) =>
-          d.drg_definition === drg_definition ? 1 : 0.3
+          d.drg_definition === drg_definition ? 1 : 0.1
         );
     });
 
