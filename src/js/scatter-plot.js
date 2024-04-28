@@ -112,13 +112,15 @@ class ScatterPlot {
     vis.dispatcher.on("highlight", (drg_definition) => {
       vis.svg
         .selectAll("circle")
+        .transition()
         .style("opacity", (d) =>
           d.drg_definition === drg_definition ? 1 : 0.1
-        );
+        )
+        .attr("r", (d) => (d.drg_definition === drg_definition ? 7 : 3));
     });
 
     vis.dispatcher.on("reset", () => {
-      vis.svg.selectAll("circle").style("opacity", 1);
+      vis.svg.selectAll("circle").transition().style("opacity", 1).attr("r", 5);
     });
 
     vis.renderVis();
@@ -130,7 +132,8 @@ class ScatterPlot {
 
     vis.svg
       .append("g")
-      .selectAll("dot")
+      // .selectAll("dot")
+      .selectAll("circle")
       .data(vis.data)
       .enter()
       .append("circle")
@@ -141,7 +144,6 @@ class ScatterPlot {
         return vis.y(d.totalAverageCoveredCharges);
       })
       .attr("r", 5)
-      // .style("fill", (d) => colorScale(d.totalAverageTotalPayments))
       .style("fill", (d) =>
         vis.colorScale(
           d.totalAverageCoveredCharges - d.totalAverageTotalPayments
@@ -149,13 +151,7 @@ class ScatterPlot {
       )
       .on("mouseover", (event, d) => {
         vis.dispatcher.call("highlight", event, d.drg_definition);
-        // increase selected circle radius
-        d3.select(event.target).attr("r", 10);
-        // lower opacity of all other circles
-        vis.svg
-          .selectAll("circle")
-          .filter((dOther) => dOther !== d)
-          .attr("opacity", 0.2);
+        // Display the tooltip at the position of the mouse
         vis.tooltip
           .html(
             `
@@ -170,13 +166,10 @@ class ScatterPlot {
           .style("left", `${event.pageX}px`)
           .style("top", `${event.pageY}px`);
       })
+      // Reset all animations
       .on("mouseout", function (event, d) {
         vis.dispatcher.call("reset", event, null);
-        // reset radius
-        d3.select(this).attr("r", 5);
-        // reset opacity
-        vis.svg.selectAll("circle").attr("opacity", 1);
-        vis.tooltip.style("opacity", 0);
+        vis.tooltip.transition().style("opacity", 0);
       });
   }
 }

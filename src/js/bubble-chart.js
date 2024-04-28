@@ -98,6 +98,7 @@ class BubbleChart {
 
     // listen for highlight on scatter plot
     vis.dispatcher.on("highlight", (drg_definition) => {
+      console.log("Working");
       vis.svg
         .selectAll("circle")
         .style("opacity", (d) =>
@@ -146,7 +147,7 @@ class BubbleChart {
           .style("top", event.pageY + "px")
           .style("opacity", 0.9);
       })
-      .on("mouseout", () => {
+      .on("mouseout", (event) => {
         vis.dispatcher.call("reset", event, null);
         vis.tooltip.style("opacity", 0);
         vis.bubbles.transition().duration(200).style("opacity", 1);
