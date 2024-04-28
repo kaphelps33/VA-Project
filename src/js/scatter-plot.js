@@ -158,9 +158,11 @@ class ScatterPlot {
             MS-DRG Code: ${d.drg_definition}<br>
             Average Covered Charges: $${d.totalAverageCoveredCharges.toLocaleString()}<br>
             Average Medicare Payments: $${d.totalAverageMedicarePayments.toLocaleString()}<br>
-            <b>Uncovered Charges: $${(
-              d.totalAverageCoveredCharges - d.totalAverageTotalPayments
-            ).toLocaleString()}<b>`
+            <b>
+            ${(
+              (d.totalAverageTotalPayments / d.totalAverageCoveredCharges) *
+              100
+            ).toFixed(0.2)}% Paid By individual<b>`
           )
           .style("opacity", 1)
           .style("left", `${event.pageX}px`)

@@ -69,7 +69,7 @@ class BubbleChart {
       .attr("text-anchor", "middle")
       .style("font-size", 20)
       .style("fill", "White")
-      .text("The Most Common DRGs and Their Costs");
+      .text("Most Common DRGs and % Of Their Costs An Individual Covers");
   }
 
   updateVis() {
@@ -169,10 +169,11 @@ class BubbleChart {
       ) // Use the text scale to set the font size
       .text(
         (d) =>
-          "$" +
           (
-            d.data.totalAverageCoveredCharges - d.data.totalAverageTotalPayments
-          ).toLocaleString()
+            (d.data.totalAverageTotalPayments /
+              d.data.totalAverageCoveredCharges) *
+            100
+          ).toFixed(0.2) + "%"
       ) // Display the price
       // .text((d) => d.data.drg_definition) // Display the price
       .attr("x", (d) => d.x)
